@@ -30,9 +30,8 @@
     </div>
 
     <script>
-        const CHANNEL_USERNAME = 'ratherbleftalone'; // Your Kick username
         const GOAL = 50;
-        const API_URL = `https://kick.com/api/v2/channels/${CHANNEL_USERNAME}`;
+        const DASHBOARD_URL = 'https://kick.com/ratherbleftalone/dashboard';
         const UPDATE_INTERVAL = 30000; // Poll every 30 seconds
 
         async function fetchSubs() {
@@ -40,21 +39,34 @@
             const errorEl = document.getElementById('error');
 
             try {
-                console.log('Fetching from:', API_URL);
-                const response = await fetch(API_URL);
-                console.log('Response status:', response.status);
-                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Create hidden iframe to load dashboard
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = DASHBOARD_URL;
+                document.body.appendChild(iframe);
 
-                const data = await response.json();
-                console.log('API response:', data);
+                // Wait for iframe to load
+                await new Promise((resolve, reject) => {
+                    iframe.onload = resolve;
+                    iframe.onerror = () => reject(new Error('Failed to load dashboard - ensure you are logged in to Kick'));
+                });
 
-                const currentSubs = data.subscriptions_count || 0;
-                subText.textContent = `${currentSubs}/${GOAL}`; // No parentheses
+                // Scrape sub count from iframe's DOM
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const subElement = iframeDoc.querySelector('span.text-sm.font-semibold.text-white span[title]');
+                if (!subElement) throw new Error('Sub count element not found - check dashboard HTML');
+
+                const subTextContent = subElement.textContent.match(/\d+/); // Extract number
+                const currentSubs = subTextContent ? parseInt(subTextContent[0], 10) : 0;
+                subText.textContent = `${currentSubs}/${GOAL}`;
                 errorEl.style.display = 'none';
+
+                // Clean up iframe
+                document.body.removeChild(iframe);
             } catch (error) {
                 console.error('Error fetching subs:', error);
                 subText.textContent = 'Error';
-                errorEl.textContent = `API Issue: ${error.message}`;
+                errorEl.textContent = `Issue: ${error.message} (Check F12 console)`;
                 errorEl.style.display = 'block';
             }
         }
