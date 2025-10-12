@@ -30,10 +30,10 @@
     </div>
 
     <script>
-        const CHANNEL_ID = 'ratherbleftalone'; // REPLACE WITH YOUR ACTUAL CHANNEL ID (e.g., '12345')
+        const CHANNEL_USERNAME = 'ratherbleftalone'; // Your Kick username
         const GOAL = 50;
-        const API_URL = `https://kick.com/api/v2/channels/${CHANNEL_ID}`;
-        const UPDATE_INTERVAL = 30000;
+        const API_URL = `https://kick.com/api/v2/channels/${CHANNEL_USERNAME}`;
+        const UPDATE_INTERVAL = 30000; // Poll every 30 seconds
 
         async function fetchSubs() {
             const subText = document.getElementById('sub-text');
