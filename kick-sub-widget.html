@@ -21,40 +21,58 @@
             font-size: 24px; / Smaller progress text below /
             opacity: 0.7;
         }
+        .error-msg {
+            color: #ff6b6b; / Red for errors */
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div class="sub-display">
         <span id="sub-text">Loading...</span>
         <div class="goal-progress" id="progress"></div>
+        <div id="error" class="error-msg" style="display: none;"></div>
     </div>
 
     <script>
-    const CHANNEL_ID = '18270886'; // Double-check this
-    const GOAL = 50;
-    const API_URL = https://kick.com/api/v2/channels/${CHANNEL_ID};
-    const UPDATE_INTERVAL = 30000;
+        const CHANNEL_ID = '18270886'; // REPLACE WITH YOUR ACTUAL ID FROM STEP 1 (e.g., 12345)
+        const GOAL = 50; // Your sub goal (change this)
+        const API_URL = https://kick.com/api/v2/channels/${CHANNEL_ID};
+        const UPDATE_INTERVAL = 30000; // Poll every 30 seconds (ms)
 
-    async function fetchSubs() {
-        try {
-            console.log('Fetching from:', API_URL); // Debug log
-            const response = await fetch(API_URL);
-            console.log('Response status:', response.status); // Debug log
-            if (!response.ok) throw new Error(HTTP error: ${response.status});
-            const data = await response.json();
-            console.log('API response:', data); // Debug log
-            const currentSubs = data.subscriptions_count || 0;
-            document.getElementById('sub-text').textContent = (${currentSubs}/${GOAL});
-            const progress = Math.round((currentSubs / GOAL) * 100);
-            document.getElementById('progress').textContent = progress >= 100 ? 'Goal Reached!' : ${progress}% to goal;
-        } catch (error) {
-            console.error('Error fetching subs:', error);
-            document.getElementById('sub-text').textContent = '(Error)';
+        async function fetchSubs() {
+            const subText = document.getElementById('sub-text');
+            const progressEl = document.getElementById('progress');
+            const errorEl = document.getElementById('error');
+
+            try {
+                console.log('Fetching from:', API_URL); // Check browser console (F12)
+                const response = await fetch(API_URL);
+                console.log('Response status:', response.status);
+                if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText});
+                
+                const data = await response.json();
+                console.log('Full API response:', data); // Logs the entire JSON
+                
+                const currentSubs = data.subscriptions_count || 0;
+                subText.textContent = (${currentSubs}/${GOAL});
+                errorEl.style.display = 'none';
+                
+                // Optional: Show progress
+                const progress = Math.round((currentSubs / GOAL) * 100);
+                progressEl.textContent = progress >= 100 ? 'Goal Reached!' : ${progress}% to goal;
+            } catch (error) {
+                console.error('Error fetching subs:', error);
+                subText.textContent = '(Error)';
+                progressEl.textContent = '';
+                errorEl.textContent = API Issue: ${error.message}. Check console (F12) for details.`;
+                errorEl.style.display = 'block';
+            }
         }
-    }
 
-    fetchSubs();
-    setInterval(fetchSubs, UPDATE_INTERVAL);
-</script>
+        // Initial load and auto-update
+        fetchSubs();
+        setInterval(fetchSubs, UPDATE_INTERVAL);
+    </script>
 </body>
 </html>
