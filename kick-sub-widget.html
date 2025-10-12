@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kick Sub Goal Widget</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: transparent;
+            font-family: Arial, sans-serif;
+            font-size: 48px; /* Adjust size as needed /
+            color: #fff; / White text; change to your stream colors /
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8); / Optional shadow for visibility /
+        }
+        .sub-display {
+            display: inline-block;
+        }
+        .goal-progress {
+            font-size: 24px; / Smaller progress text below /
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="sub-display">
+        <span id="sub-text">Loading...</span>
+        <div class="goal-progress" id="progress"></div>
+    </div>
+
+    <script>
+        const CHANNEL_ID = '18270886'; // Replace with your numeric channel ID
+        const GOAL = 50; // Your sub goal (change this)
+        const API_URL = https://kick.com/api/v2/channels/${CHANNEL_ID};
+        const UPDATE_INTERVAL = 30000; // Poll every 30 seconds (ms)
+
+        async function fetchSubs() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error('API fetch failed');
+                const data = await response.json();
+                const currentSubs = data.subscriptions_count || 0; // Pulls active subs
+                document.getElementById('sub-text').textContent = (${currentSubs}/${GOAL});
+
+                // Optional: Show progress (e.g., "60% to goal")
+                const progress = Math.round((currentSubs / GOAL) 100);
+                document.getElementById('progress').textContent = progress >= 100 ? 'Goal Reached!' : ${progress}% to goal;
+            } catch (error) {
+                console.error('Error fetching subs:', error);
+                document.getElementById('sub-text').textContent = '(Error)';
+            }
+        }
+
+        // Initial load and auto-update
+        fetchSubs();
+        setInterval(fetchSubs, UPDATE_INTERVAL);
+    </script>
+</body>
+</html>
