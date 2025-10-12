@@ -31,48 +31,34 @@
 
     <script>
         const GOAL = 50;
-        const DASHBOARD_URL = 'https://kick.com/ratherbleftalone/dashboard';
-        const UPDATE_INTERVAL = 30000; // Poll every 30 seconds
+        const UPDATE_INTERVAL = 30000;
 
-        async function fetchSubs() {
+        function updateSubCount() {
             const subText = document.getElementById('sub-text');
             const errorEl = document.getElementById('error');
 
             try {
-                // Create hidden iframe to load dashboard
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.src = DASHBOARD_URL;
-                document.body.appendChild(iframe);
-
-                // Wait for iframe to load
-                await new Promise((resolve, reject) => {
-                    iframe.onload = resolve;
-                    iframe.onerror = () => reject(new Error('Failed to load dashboard - ensure you are logged in to Kick'));
-                });
-
-                // Scrape sub count from iframe's DOM
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                const subElement = iframeDoc.querySelector('span.text-sm.font-semibold.text-white span[title]');
-                if (!subElement) throw new Error('Sub count element not found - check dashboard HTML');
-
-                const subTextContent = subElement.textContent.match(/\d+/); // Extract number
-                const currentSubs = subTextContent ? parseInt(subTextContent[0], 10) : 0;
+                // Get sub count from localStorage (set by userscript)
+                const currentSubs = parseInt(localStorage.getItem('kick_sub_count') || '0', 10);
                 subText.textContent = `${currentSubs}/${GOAL}`;
                 errorEl.style.display = 'none';
-
-                // Clean up iframe
-                document.body.removeChild(iframe);
             } catch (error) {
-                console.error('Error fetching subs:', error);
+                console.error('Error updating subs:', error);
                 subText.textContent = 'Error';
-                errorEl.textContent = `Issue: ${error.message} (Check F12 console)`;
+                errorEl.textContent = `Issue: ${error.message}`;
                 errorEl.style.display = 'block';
             }
         }
 
-        fetchSubs();
-        setInterval(fetchSubs, UPDATE_INTERVAL);
+        // Listen for storage changes (from userscript)
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'kick_sub_count') {
+                updateSubCount();
+            }
+        });
+
+        updateSubCount();
+        setInterval(updateSubCount, UPDATE_INTERVAL);
     </script>
 </body>
 </html>
