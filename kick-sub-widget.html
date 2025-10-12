@@ -17,10 +17,6 @@
         .sub-display {
             display: inline-block;
         }
-        .goal-progress {
-            font-size: 24px;
-            opacity: 0.7;
-        }
         .error-msg {
             color: #ff6b6b;
             font-size: 18px;
@@ -30,19 +26,17 @@
 <body>
     <div class="sub-display">
         <span id="sub-text">Loading...</span>
-        <div class="goal-progress" id="progress"></div>
         <div id="error" class="error-msg" style="display: none;"></div>
     </div>
 
     <script>
-        const CHANNEL_ID = 'ratherbleftalone'; // REPLACE WITH YOUR ACTUAL CHANNEL ID (e.g., '12345')
+        const CHANNEL_ID = 'ratherbleftlaone'; // REPLACE WITH YOUR ACTUAL CHANNEL ID (e.g., '12345')
         const GOAL = 50;
         const API_URL = `https://kick.com/api/v2/channels/${CHANNEL_ID}`;
         const UPDATE_INTERVAL = 30000;
 
         async function fetchSubs() {
             const subText = document.getElementById('sub-text');
-            const progressEl = document.getElementById('progress');
             const errorEl = document.getElementById('error');
 
             try {
@@ -55,15 +49,11 @@
                 console.log('API response:', data);
 
                 const currentSubs = data.subscriptions_count || 0;
-                subText.textContent = `(${currentSubs}/${GOAL})`;
+                subText.textContent = `${currentSubs}/${GOAL}`; // No parentheses
                 errorEl.style.display = 'none';
-
-                const progress = Math.round((currentSubs / GOAL) * 100);
-                progressEl.textContent = progress >= 100 ? 'Goal Reached!' : `${progress}% to goal`;
             } catch (error) {
                 console.error('Error fetching subs:', error);
-                subText.textContent = '(Error)';
-                progressEl.textContent = '';
+                subText.textContent = 'Error';
                 errorEl.textContent = `API Issue: ${error.message}`;
                 errorEl.style.display = 'block';
             }
