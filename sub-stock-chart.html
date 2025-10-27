@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kick Sub Stock Chart</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; background: transparent; }
+        #chart-container { width: 100%; height: 200px; position: relative; }
+        #sub-ticker { font-family: Arial, sans-serif; font-size: 24px; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); position: absolute; top: 10px; right: 10px; }
+    </style>
+</head>
+<body>
+    <div id="chart-container">
+        <canvas id="subChart"></canvas>
+        <div id="sub-ticker">Subs: Loading...</div>
+    </div>
+
+    <script>
+        let currentSubs = 4; // Initial from StreamElements
+        let goal = 50;
+        let chart;
+
+        // Chart.js setup (Robinhood-like line chart)
+        const ctx = document.getElementById('subChart').getContext('2d');
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Time labels
+                datasets: [{
+                    label: 'Subs (Stock Price)',
+                    data: [], // Sub counts
+                    borderColor: 'rgb(0, 255, 0)', // Green for rise
+                    backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                    tension: 0.4, // Smooth curve
+                    pointRadius: 0 // No points for clean line
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, display: false }, // Hide Y for basic look
+                    x: { display: false } // Hide X for basic look
+                },
+                plugins: { legend: { display: false } }, // No legend
+                animation: { duration: 1000, easing: 'easeInOutQuad' } // 1s smooth animation
+            }
+        });
+
+        // Update chart and ticker on sub changes (from StreamElements events)
+        function updateChart(subCount, change) {
+            currentSubs = subCount;
+            goal = Math.ceil(subCount / 50) * 50; // Dynamic goal
+
+            // Add new data point
+            const now = new Date().toLocaleTimeString();
+            chart.data.labels.push(now);
+            chart.data.datasets[0].data.push(subCount);
+
+            // Limit to last 20 points for performance
+            if (chart.data.labels.length > 20) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+            }
+
+            // Color change: Green for rise, red for drop
+            const color = change > 0 ? 'rgb(0, 255, 0)' : change < 0 ? 'rgb(255, 0, 0)' : 'rgb(255, 255, 0)';
+            chart.data.datasets[0].borderColor = color;
+            chart.data.datasets[0].backgroundColor = change > 0 ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+
+            chart.update('active'); // Animate update
+
+            // Update ticker
+            document.getElementById('sub-ticker').textContent = `Subs: ${subCount}/${goal}`;
+        }
+
+        // StreamElements event listeners
+        window.addEventListener('onWidgetLoad', (e) => {
+            const subCount = e.detail.session.data['subscriber-total']?.count || 4;
+            updateChart(subCount, 0); // Initial load
+        });
+
+        window.addEventListener('onEventReceived', (e) => {
+            if (e.detail.listener === 'subscriber-total' || e.detail.listener === 'subscriber-latest') {
+                const newCount = e.detail.data.count || currentSubs;
+                const change = newCount - currentSubs;
+                updateChart(newCount, change);
+            }
+        });
+
+        // Fallback initial display
+        setTimeout(() => {
+            if (document.getElementById('sub-ticker').textContent === 'Subs: Loading...') {
+                updateChart(4, 0);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
